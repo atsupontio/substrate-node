@@ -1,0 +1,69 @@
+[package]
+name = "pallet-sys-man"
+version = "0.0.1"
+description = "FRAME pallet template for defining custom runtime logic."
+authors = ["Smart CV Chain Team"]
+# homepage = "https://substrate.io/"
+edition = "2021"
+license = "Unlicense"
+publish = false
+repository = "https://github.com/SCV-chain/substrate-node"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies.scale-info]
+version = "1.0"
+default-features = false
+features = ["derive"]
+
+[dependencies.frame-support]
+default-features = false
+version = "4.0.0-dev"
+git = "https://github.com/paritytech/substrate.git"
+tag = "devhub/latest"
+
+[dependencies.frame-system]
+default-features = false
+version = "4.0.0-dev"
+git = "https://github.com/paritytech/substrate.git"
+tag = "devhub/latest"
+
+[dependencies.frame-benchmarking]
+default-features = false
+version = "4.0.0-dev"
+git = "https://github.com/paritytech/substrate.git"
+tag = "devhub/latest"
+optional = true
+
+[dependencies.sp-core]
+default-features = false
+version = "4.0.0-dev"
+git = "https://github.com/paritytech/substrate.git"
+tag = "devhub/latest"
+
+[dependencies.sp-io]
+default-features = false
+version = "4.0.0-dev"
+git = "https://github.com/paritytech/substrate.git"
+tag = "devhub/latest"
+
+[dependencies.sp-runtime]
+default-features = false
+version = "4.0.0-dev"
+git = "https://github.com/paritytech/substrate.git"
+tag = "devhub/latest"
+
+[features]
+default = ["std"]
+
+std = [
+	"scale-info/std",
+	"frame-benchmarking/std",
+	"frame-support/std",
+	"frame-system/std"
+]
+
+runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
+
+try-runtime = ["frame-support/try-runtime"]
