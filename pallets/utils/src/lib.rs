@@ -7,6 +7,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+pub type TypeID = u32;
 
 #[frame_support::pallet]
 pub mod pallet {

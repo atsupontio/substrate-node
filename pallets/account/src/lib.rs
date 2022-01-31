@@ -5,7 +5,7 @@
 /// <https://docs.substrate.io/v3/runtime/frame>
 pub use pallet::*;
 
-pub use utils::Role;
+pub use pallet_utils::Role;
 
 #[cfg(test)]
 mod mock;
@@ -21,7 +21,8 @@ pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
-	pub struct Account<T::Config> {
+    #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug)]
+	pub struct Account<T:Config> {
 		id: T::AccountId,
 		role: Role,
 		metadata: String,
@@ -51,16 +52,16 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		AccountRegisted(T::AccountId, Account<T>)
+		AccountRegisted(T::AccountId)
 	}
 
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
 		/// Account is already Registered
-		AlreadyRegistered(T::AccountId),
+		AlreadyRegistered,
 		/// Account is not Registered
-		AccountNotRegistered(T::AccountId),
+		AccountNotRegistered,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -78,13 +79,12 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			match <AccountStorage<T>>::try_get(who) {
 				Err() => {
-					let newAcount = Account {
+					<AccountStorage<T>>::insert(who, Account {
 						id: who,
 						role: role,
 						metadata: metadata,
-					}
-					<AccountStorage<T>>::insert(who, newAcount);
-					Self::deposit_event(Event::AccountRegisted(who, newAcount));
+					});
+					Self::deposit_event(Event::AccountRegisted(who));
 				},
 				Ok() => Err(Error::<T>::AlreadyRegistered(who))
 			}
@@ -100,24 +100,20 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			match <AccountStorage<T>>::try_get(who) {
 				Ok() => {
-					let newAcount = Account {
-						id: who,
-						role: role,
-						metadata: metadata,
-					}
 					<AccountStorage<T>>::try_mutate(who, |account| {
 						*account = Account {
 							id : who,
-							role: role
+							role: role,
 							metadata: metadata
 						}
 					});
 					Self::deposit_event(Event::AccountUpdated(who, newAcount));
+					// Return a successful DispatchResultWithPostInfo
+					Ok(())
 				},
 				Err(x) => Err(Error::<T>::AccountNotRegistered(who))
 			}
-			// Return a successful DispatchResultWithPostInfo
-			Ok(())
+
 		}
 
 	}
