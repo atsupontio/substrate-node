@@ -62,9 +62,8 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Event documentation should end with an array that provides descriptive names for event
-		/// parameters. [something, who]
-		SomethingStored(u32, T::AccountId),
+		RevokeSucceed(TypeID),
+		CreateSucceed(TypeID),
 	}
 
 	// Errors inform users that something went wrong.
@@ -101,6 +100,23 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::weight(10_000)]
+		pub fn revoke_item(origin: OriginFor<T>, item_id: TypeID) -> DispatchResult {
+			// Check that the extrinsic was signed and get the signer.
+			// This function will return an error if the extrinsic is not signed.
+			// https://docs.substrate.io/v3/runtime/origins
+			let who = ensure_signed(origin)?;
+			let item_id = Self::item_id();
+			let certificate =;
+			let new_item: Item<T> = Item::new(item_id, account_id, who.clone(), metadata.clone());
+			// Update storage.
+			<ItemsByAccountId<T>>::get(who);
+
+			// Emit an event.
+			Self::deposit_event(Event::RevokeSucceed(item_id));
+			// Return a successful DispatchResultWithPostInfo
+			Ok(())
+		}
 
 	}
 }
