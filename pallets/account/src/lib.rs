@@ -5,23 +5,22 @@
 /// <https://docs.substrate.io/v3/runtime/frame>
 pub use pallet::*;
 
-pub use pallet_utils::Role;
-
 #[cfg(test)]
 mod mock;
 
 #[cfg(test)]
 mod tests;
 
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
-
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
+	use pallet_utils::Role;
+	use scale_info::TypeInfo;
 
-    #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug)]
+
+    #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+	#[scale_info(bounds(), skip_type_params(T))]
 	pub struct Account<T:Config> {
 		id: T::AccountId,
 		role: Role,
@@ -45,14 +44,15 @@ pub mod pallet {
 	#[pallet::getter(fn accountStorage)]
 	// Learn more about declaring storage items:
 	// https://docs.substrate.io/v3/runtime/storage#declaring-storage-items
-	pub type AccountStorage<T> = StorageMap<_, Twox64Concat, T::AccountId, Account<T>, ValueQuery>;
+	pub type AccountStorage<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, Account<T>, OptionQuery>;
 
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/v3/runtime/events-and-errors
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		AccountRegisted(T::AccountId)
+		AccountRegisted(T::AccountId),
+		AccountUpdated(T::AccountId),
 	}
 
 	// Errors inform users that something went wrong.
@@ -77,16 +77,16 @@ pub mod pallet {
 			// This function will return an error if the extrinsic is not signed.
 			// https://docs.substrate.io/v3/runtime/origins
 			let who = ensure_signed(origin)?;
-			match <AccountStorage<T>>::try_get(who) {
-				Err() => {
-					<AccountStorage<T>>::insert(who, Account {
-						id: who,
+			match <AccountStorage<T>>::try_get(&who) {
+				Err(_) => {
+					<AccountStorage<T>>::insert(&who, Account {
+						id: who.clone(),
 						role: role,
 						metadata: metadata,
 					});
 					Self::deposit_event(Event::AccountRegisted(who));
 				},
-				Ok() => Err(Error::<T>::AlreadyRegistered(who))
+				Ok(_) => Err(Error::<T>::AlreadyRegistered)?
 			}
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
@@ -98,20 +98,14 @@ pub mod pallet {
 			// This function will return an error if the extrinsic is not signed.
 			// https://docs.substrate.io/v3/runtime/origins
 			let who = ensure_signed(origin)?;
-			match <AccountStorage<T>>::try_get(who) {
-				Ok() => {
-					<AccountStorage<T>>::try_mutate(who, |account| {
-						*account = Account {
-							id : who,
-							role: role,
-							metadata: metadata
-						}
-					});
-					Self::deposit_event(Event::AccountUpdated(who, newAcount));
+			match <AccountStorage<T>>::try_get(&who) {
+				Ok(_) => {
+
+					Self::deposit_event(Event::AccountUpdated(who));
 					// Return a successful DispatchResultWithPostInfo
 					Ok(())
 				},
-				Err(x) => Err(Error::<T>::AccountNotRegistered(who))
+				Err(_) => Err(Error::<T>::AccountNotRegistered)?
 			}
 
 		}

@@ -29,7 +29,7 @@ pub mod pallet {
     };
     use scale_info::TypeInfo;
 
-    #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug)]
+    #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
     pub struct WhoAndWhen<T: Config> {
         pub account: T::AccountId,
         pub block: T::BlockNumber,
@@ -46,12 +46,12 @@ pub mod pallet {
         }
     }
 
-    #[derive(Encode, Decode, Ord, PartialOrd, Clone, Eq, PartialEq, RuntimeDebug)]
+    #[derive(Encode, Decode, Ord, PartialOrd, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
     pub enum User<AccountId> {
         Account(AccountId),
     }
 
-    #[derive(Encode, Decode, Ord, PartialOrd, Clone, Eq, PartialEq, RuntimeDebug)]
+    #[derive(Encode, Decode, Ord, PartialOrd, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
     pub enum Role {
         Organization,
         SysMan,
