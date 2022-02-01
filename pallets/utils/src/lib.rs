@@ -7,6 +7,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+pub type TypeID = u32;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -28,7 +29,7 @@ pub mod pallet {
     };
     use scale_info::TypeInfo;
 
-    #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug)]
+    #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
     pub struct WhoAndWhen<T: Config> {
         pub account: T::AccountId,
         pub block: T::BlockNumber,
@@ -45,17 +46,32 @@ pub mod pallet {
         }
     }
 
-    #[derive(Encode, Decode, Ord, PartialOrd, Clone, Eq, PartialEq, RuntimeDebug)]
+    #[derive(Encode, Decode, Ord, PartialOrd, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
     pub enum User<AccountId> {
         Account(AccountId),
     }
 
-    #[derive(Encode, Decode, Ord, PartialOrd, Clone, Eq, PartialEq, RuntimeDebug)]
+    #[derive(Encode, Decode, Ord, PartialOrd, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
     pub enum Role {
         Organization,
         SysMan,
         User,
     }
+
+    #[derive(Encode, Decode, Ord, PartialOrd, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+    pub enum Status {
+        Active,
+        Revoked,
+        Deactivated,
+    }
+
+    impl Default for Status {
+        fn default() -> Self {
+            Self::Active
+        }
+    }
+
+    
 
     impl<AccountId> User<AccountId> {
         pub fn maybe_account(self) -> Option<AccountId> {
