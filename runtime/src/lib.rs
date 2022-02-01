@@ -41,7 +41,7 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
 /// Import the scv pallet.
-pub use pallet_timestamp;
+
 /// An index to a block.
 pub type BlockNumber = u32;
 
@@ -278,6 +278,10 @@ impl pallet_utils::Config for Runtime {
 	type Currency = Balances;
 }
 
+impl pallet_account::Config for Runtime {
+	type Event = Event;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -295,7 +299,9 @@ construct_runtime!(
 		Sudo: pallet_sudo,
 		//governance pallets
 		//scv-chian pallets
-		Utils: pallet_utils,		
+		Account: pallet_account,
+		Utils: pallet_utils,
+
 	}
 );
 
