@@ -15,16 +15,17 @@ mod tests;
 pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	use pallet_utils::Role;
+	use pallet_utils::{Role, Status};
 	use scale_info::TypeInfo;
-
+	use frame_support::inherent::Vec;
 
     #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
 	#[scale_info(bounds(), skip_type_params(T))]
 	pub struct Account<T:Config> {
 		id: T::AccountId,
 		role: Role,
-		metadata: String,
+		status: Status,
+		metadata: Vec<u8>,
 	}
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
@@ -41,7 +42,7 @@ pub mod pallet {
 	// The pallet's runtime storage items.
 	// https://docs.substrate.io/v3/runtime/storage
 	#[pallet::storage]
-	#[pallet::getter(fn accountStorage)]
+	#[pallet::getter(fn account_storage)]
 	// Learn more about declaring storage items:
 	// https://docs.substrate.io/v3/runtime/storage#declaring-storage-items
 	pub type AccountStorage<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, Account<T>, OptionQuery>;
@@ -72,7 +73,7 @@ pub mod pallet {
 		/// An example dispatchable that takes a singles value as a parameter, writes the value to
 		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
 		#[pallet::weight(10_000)]
-		pub fn register(origin: OriginFor<T>, role: Role, metadata: String) -> DispatchResult {
+		pub fn register(origin: OriginFor<T>, role: Role, metadata: Vec<u8>) -> DispatchResult {
 			// Check that the extrinsic was signed and get the signer.
 			// This function will return an error if the extrinsic is not signed.
 			// https://docs.substrate.io/v3/runtime/origins
@@ -82,6 +83,7 @@ pub mod pallet {
 					<AccountStorage<T>>::insert(&who, Account {
 						id: who.clone(),
 						role: role,
+						status: Status::Active,
 						metadata: metadata,
 					});
 					Self::deposit_event(Event::AccountRegisted(who));
@@ -91,9 +93,9 @@ pub mod pallet {
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
 		}
-
+		// TODO
 		#[pallet::weight(10_000)]
-		pub fn update(origin: OriginFor<T>, role: Role, metadata: String) -> DispatchResult {
+		pub fn update(origin: OriginFor<T>, _role: Role, _metadata: Vec<u8>) -> DispatchResult {
 			// Check that the extrinsic was signed and get the signer.
 			// This function will return an error if the extrinsic is not signed.
 			// https://docs.substrate.io/v3/runtime/origins

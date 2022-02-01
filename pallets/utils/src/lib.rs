@@ -58,6 +58,21 @@ pub mod pallet {
         User,
     }
 
+    #[derive(Encode, Decode, Ord, PartialOrd, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+    pub enum Status {
+        Active,
+        Revoked,
+        Deactivated,
+    }
+
+    impl Default for Status {
+        fn default() -> Self {
+            Self::Active
+        }
+    }
+
+    
+
     impl<AccountId> User<AccountId> {
         pub fn maybe_account(self) -> Option<AccountId> {
             if let User::Account(account_id) = self {
