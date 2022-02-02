@@ -120,7 +120,7 @@ pub mod pallet {
 
 			<ItemById<T>>::remove(_item_id);
 			<ItemsByAccountId<T>>::try_mutate(who, |list_account| {
-				let
+				list_account.retain(|&x| x != _item_id);
 			});
 			// Emit an event.
 			Self::deposit_event(Event::RevokeSucceed(item_id));
