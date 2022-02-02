@@ -18,16 +18,23 @@ mod benchmarking;
 pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	use utils::Content;
+	use utils::{Content, TypeID};
+	use std::collections::BTreeSet;
 
 	pub struct Item<T::Config> {
-		itemId: u32,
-		userID: T::AccountId,
+		item_id: TypeID,
+		user_id: T::AccountId,
 		created: WhoAndWhen<T>,
 		org_date: Option(T::Moment),
 		exp_date: Option(T::Moment),
-		certificated: Certificate,
+		certificated: Option(Certificate),
 		metadata: Content,
+	}
+
+	impl Item<T> {
+		fn new(_item_id: TypeID, _user_id: T::AccountId, _metadata: String) {
+
+		}
 	}
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
@@ -51,7 +58,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn item_by_id)]
-	pub type ItemById<T> = StorageMap<_, twox_64_concat, TypeID, Item<T>, ValueQuery>;
+	pub type ItemById<T> = StorageMap<_, twox_64_concat, TypeID, Item<T>, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn items_by_accountid)]
@@ -83,16 +90,20 @@ pub mod pallet {
 		/// An example dispatchable that takes a singles value as a parameter, writes the value to
 		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
 		#[pallet::weight(10_000)]
-		pub fn create_item(origin: OriginFor<T>, account_id: AccountId, metadata: String) -> DispatchResult {
+		pub fn create_item(origin: OriginFor<T>, _account_id: AccountId, _metadata: String) -> DispatchResult {
 			// Check that the extrinsic was signed and get the signer.
 			// This function will return an error if the extrinsic is not signed.
 			// https://docs.substrate.io/v3/runtime/origins
 			let who = ensure_signed(origin)?;
 			let item_id = Self::item_id();
-			let certificate =;
-			let new_item: Item<T> = Item::new(item_id, account_id, who.clone(), metadata.clone());
+			let new_item: Item<T> = Item{
+				item_id: item_id,
+				account_id: _account_id,
+				created: who.clone(),
+				metadata: _metadata,
+			};
 			// Update storage.
-			<Something<T>>::put(something);
+			<ItemById<T>>::insert(_item_id, new_item.clone());
 
 			// Emit an event.
 			Self::deposit_event(Event::CreateSucceed(item_id));
@@ -101,17 +112,16 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000)]
-		pub fn revoke_item(origin: OriginFor<T>, item_id: TypeID) -> DispatchResult {
+		pub fn revoke_item(origin: OriginFor<T>, _item_id: TypeID) -> DispatchResult {
 			// Check that the extrinsic was signed and get the signer.
 			// This function will return an error if the extrinsic is not signed.
 			// https://docs.substrate.io/v3/runtime/origins
 			let who = ensure_signed(origin)?;
-			let item_id = Self::item_id();
-			let certificate =;
-			let new_item: Item<T> = Item::new(item_id, account_id, who.clone(), metadata.clone());
-			// Update storage.
-			<ItemsByAccountId<T>>::get(who);
 
+			<ItemById<T>>::remove(_item_id);
+			<ItemsByAccountId<T>>::try_mutate(who, |list_account| {
+				let
+			});
 			// Emit an event.
 			Self::deposit_event(Event::RevokeSucceed(item_id));
 			// Return a successful DispatchResultWithPostInfo
