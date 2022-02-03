@@ -9,6 +9,7 @@ mod tests;
 
 pub type TypeID = u32;
 pub type UnixEpoch = u64;
+pub type String = Vec<u8>;
 
 #[frame_support::pallet]
 pub mod pallet {

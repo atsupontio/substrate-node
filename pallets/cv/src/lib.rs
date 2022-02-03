@@ -11,25 +11,24 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
-
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	use utils::{Content, TypeID, UnixEpoch};
-	use std::collections::BTreeSet;
+	use pallet_utils::{String, TypeID, UnixEpoch, WhoAndWhen};
+	use scale_info::TypeInfo;
 
-	pub struct Item<T::Config> {
+    #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+	#[scale_info(bounds(), skip_type_params(T))]
+	pub struct Item<T: Config> {
 		item_id: TypeID,
 		user_id: T::AccountId,
 		created: WhoAndWhen<T>,
-		org_date: UnixEpoch,
-		exp_date: UnixEpoch,
+		org_date: Option<UnixEpoch>,
+		exp_date: Option<UnixEpoch>,
 		certificate_id: Option<TypeID>,
 		score: u32,
-		metadata: Content,
+		metadata: String,
 	}
 
 	impl<T: Config> Item<T> {
@@ -38,11 +37,11 @@ pub mod pallet {
 			id: TypeID,
 			user_id: T::AccountId,
 			created_by: T::AccountId,
-			org_date: Option<UnixEpoch> = None,
-			exp_date: Option<UnixEpoch> = None,
-			certificated: Option<Certificate> = None,
+			org_date: Option<UnixEpoch>,
+			exp_date: Option<UnixEpoch>,
+			certificated: Option<TypeID>,
 			score: u32,
-			metadata: Content
+			metadata: String
 		) -> Self {
 			Item {
 				item_id: id,
@@ -50,7 +49,7 @@ pub mod pallet {
 				created: WhoAndWhen::<T>::new(created_by.clone()),
 				org_date: org_date,
 				exp_date: exp_date,
-				certificated: None,
+				certificate_id: None,
 				score: 0,
 				metadata: metadata,
 			}
@@ -68,7 +67,7 @@ pub mod pallet {
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + pallet_utils::Config{
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 	}
@@ -80,18 +79,18 @@ pub mod pallet {
 	// The pallet's runtime storage items.
 	// https://docs.substrate.io/v3/runtime/storage
 	#[pallet::storage]
-	#[pallet::getter(fn itemid)]
+	#[pallet::getter(fn item_id)]
 	// Learn more about declaring storage items:
 	// https://docs.substrate.io/v3/runtime/storage#declaring-storage-items
-	pub type ItemId = StorageValue<_, u64>;
+	pub type ItemId<T> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn item_by_id)]
-	pub type ItemById<T> = StorageMap<_, twox_64_concat, TypeID, Item<T>, OptionQuery>;
+	pub type ItemById<T> = StorageMap<_, Twox64Concat, TypeID, Item<T>, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn items_by_accountid)]
-	pub type ItemsByAccountId<T> = StorageMap<_, twox_64_concat, T::AccountId, Vec<Item<T>>, ValueQuery>;
+	pub type ItemsByAccountId<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, Vec<TypeID>, ValueQuery>;
 
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/v3/runtime/events-and-errors
@@ -106,7 +105,7 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		/// Error names should be descriptive.
-		ItemNotFound(TypeID),
+		ItemNotFound,
 		/// Errors should have helpful documentation associated with them.
 		StorageOverflow,
 	}
@@ -119,19 +118,19 @@ pub mod pallet {
 		/// An example dispatchable that takes a singles value as a parameter, writes the value to
 		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
 		#[pallet::weight(10_000)]
-		pub fn create_item(origin: OriginFor<T>, _account_id: AccountId, _metadata: Content, _org_date: UnixEpoch, _exp_date: UnixEpoch,
-			_certificated_id: TypeID) -> DispatchResult {
+		pub fn create_item(origin: OriginFor<T>, _account_id: T::AccountId, _metadata: String, _org_date: 
+			Option<UnixEpoch>, _exp_date: Option<UnixEpoch>,
+			_certificated_id: Option<TypeID>) -> DispatchResult {
 			// Check that the extrinsic was signed and get the signer.
 			// This function will return an error if the extrinsic is not signed.
 			// https://docs.substrate.io/v3/runtime/origins
 			let who = ensure_signed(origin)?;
 			let item_id = Self::item_id();
-			let new_item: Item<T> = Item::new(item_id, _account_id.clone(), who.clone(), _org_date, _exp_date
-			_certificated_id, 0, _metadata: Content);
-			// Update storage.
+			let new_item: Item<T> = Item::new(item_id, _account_id.clone(), who.clone(), _org_date, _exp_date,
+		_certificated_id, 0, _metadata);
 			<ItemById<T>>::insert(item_id, new_item);
 			<ItemsByAccountId<T>>::mutate(who, |x| x.push(item_id));
-			ItemId::mutate(|n| { *n += 1; });
+			<ItemId<T>>::mutate(|n| { *n += 1; });
 			// Emit an event.
 			Self::deposit_event(Event::CreateSucceed(item_id));
 			// Return a successful DispatchResultWithPostInfo
@@ -147,13 +146,13 @@ pub mod pallet {
 
 			let item_idx = Self::items_by_accountid(&who).iter()
 			.position(|x| { *x == _item_id });
-			ensure!(item_idx != None, Error::<T>::ItemNotFound(_item_id));
+			ensure!(item_idx != None, Error::<T>::ItemNotFound);
 			if let Some(iid) = item_idx {
-				<ItemsByAccountId<T>>::try_mutate(&who, |x| { x.swap_remove(iid) });
+				<ItemsByAccountId<T>>::mutate(&who, |x| { x.swap_remove(iid) });
 			}
 			<ItemById<T>>::remove(_item_id);
 			// Emit an event.
-			Self::deposit_event(Event::RevokeSucceed(item_id));
+			Self::deposit_event(Event::RevokeSucceed(_item_id));
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
 		}
