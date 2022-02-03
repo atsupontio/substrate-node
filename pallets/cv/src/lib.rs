@@ -119,9 +119,12 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 
 			<ItemById<T>>::remove(_item_id);
-			<ItemsByAccountId<T>>::try_mutate(who, |list_account| {
-				list_account.retain(|&x| x != _item_id);
-			});
+			let item_idx = Self::items_by_accountid(&who).iter()
+			.position(|x| { *x == _item_id });
+
+			if let Some(iid) = item_idx {
+				<ItemsByAccountId<T>>::try_mutate(&who, |x| { x.swap_remove(iid) });
+			}
 			// Emit an event.
 			Self::deposit_event(Event::RevokeSucceed(item_id));
 			// Return a successful DispatchResultWithPostInfo
