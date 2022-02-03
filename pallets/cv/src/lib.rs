@@ -25,16 +25,45 @@ pub mod pallet {
 		item_id: TypeID,
 		user_id: T::AccountId,
 		created: WhoAndWhen<T>,
-		org_date: Option(T::Moment),
-		exp_date: Option(T::Moment),
-		certificated: Option(Certificate),
+		org_date: Option<T::Moment>,
+		exp_date: Option<T::Moment>,
+		certificate_id: Option<TypeID>,
+		score: u32,
 		metadata: Content,
 	}
 
-	impl Item<T> {
-		fn new(_item_id: TypeID, _user_id: T::AccountId, _metadata: String) {
+	impl<T: Config> Item<T> {
 
+		pub fn new(
+			id: TypeID,
+			user_id: T::AccountId,
+			created_by: T::AccountId,
+			org_date: Option<T::Moment> = None,
+			exp_date: Option<T::Moment> = None,
+			certificated: Option<Certificate> = None,
+			score: u32,
+			metadata: Content
+		) -> Self {
+			Item {
+				item_id: id,
+				user_id: created_by,
+				created: WhoAndWhen::<T>::new(created_by.clone()),
+				org_date: org_date,
+				exp_date: exp_date,
+				certificated: None,
+				score: 0,
+				metadata: metadata,
+			}
 		}
+
+		// pub fn ensure_owner(&self, account: &T::AccountId) -> DispatchResult {
+		// 	ensure!(self.is_owner(account), Error::<T>::NotAPostOwner);
+		// 	Ok(())
+		// }
+
+		// pub fn is_owner(&self, account: &T::AccountId) -> bool {
+		// 	self.owner == *account
+		// }
 	}
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
@@ -54,7 +83,7 @@ pub mod pallet {
 	#[pallet::getter(fn itemid)]
 	// Learn more about declaring storage items:
 	// https://docs.substrate.io/v3/runtime/storage#declaring-storage-items
-	pub type ItemId<T> = StorageValue<_, u64>;
+	pub type ItemId = StorageValue<_, u64>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn item_by_id)]
@@ -90,21 +119,19 @@ pub mod pallet {
 		/// An example dispatchable that takes a singles value as a parameter, writes the value to
 		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
 		#[pallet::weight(10_000)]
-		pub fn create_item(origin: OriginFor<T>, _account_id: AccountId, _metadata: String) -> DispatchResult {
+		pub fn create_item(origin: OriginFor<T>, _account_id: AccountId, _metadata: Content, _org_date: T::Moment, _exp_date: T::Moment,
+			_certificated_id: TypeID) -> DispatchResult {
 			// Check that the extrinsic was signed and get the signer.
 			// This function will return an error if the extrinsic is not signed.
 			// https://docs.substrate.io/v3/runtime/origins
 			let who = ensure_signed(origin)?;
 			let item_id = Self::item_id();
-			let new_item: Item<T> = Item{
-				item_id: item_id,
-				account_id: _account_id,
-				created: who.clone(),
-				metadata: _metadata,
-			};
+			let new_item: Item<T> = Item::new(item_id, _account_id.clone(), who.clone(), _org_date, _exp_date
+			_certificated_id, 0, _metadata: Content);
 			// Update storage.
-			<ItemById<T>>::insert(_item_id, new_item.clone());
-
+			<ItemById<T>>::insert(item_id, new_item);
+			<ItemsByAccountId<T>>::mutate(who, |x| x.push(item_id));
+			ItemId::mutate(|n| { *n += 1; });
 			// Emit an event.
 			Self::deposit_event(Event::CreateSucceed(item_id));
 			// Return a successful DispatchResultWithPostInfo
@@ -118,13 +145,13 @@ pub mod pallet {
 			// https://docs.substrate.io/v3/runtime/origins
 			let who = ensure_signed(origin)?;
 
-			<ItemById<T>>::remove(_item_id);
 			let item_idx = Self::items_by_accountid(&who).iter()
 			.position(|x| { *x == _item_id });
 
 			if let Some(iid) = item_idx {
 				<ItemsByAccountId<T>>::try_mutate(&who, |x| { x.swap_remove(iid) });
 			}
+			<ItemById<T>>::remove(_item_id);
 			// Emit an event.
 			Self::deposit_event(Event::RevokeSucceed(item_id));
 			// Return a successful DispatchResultWithPostInfo
