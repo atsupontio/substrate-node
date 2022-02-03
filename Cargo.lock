@@ -3581,6 +3581,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-sys-man"
+version = "0.0.1"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
 name = "pallet-template"
 version = "4.0.0-dev"
 dependencies = [
