@@ -18,7 +18,7 @@ pub mod pallet {
 	use pallet_utils::{String, TypeID, UnixEpoch, WhoAndWhen};
 	use scale_info::TypeInfo;
 
-    #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+	#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
 	#[scale_info(bounds(), skip_type_params(T))]
 	pub struct Item<T: Config> {
 		item_id: TypeID,
@@ -32,7 +32,6 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Item<T> {
-
 		pub fn new(
 			id: TypeID,
 			user_id: T::AccountId,
@@ -41,17 +40,17 @@ pub mod pallet {
 			exp_date: Option<UnixEpoch>,
 			certificated: Option<TypeID>,
 			score: u32,
-			metadata: String
+			metadata: String,
 		) -> Self {
 			Item {
 				item_id: id,
-				user_id: created_by,
+				user_id: created_by.clone(),
 				created: WhoAndWhen::<T>::new(created_by.clone()),
-				org_date: org_date,
-				exp_date: exp_date,
+				org_date,
+				exp_date,
 				certificate_id: None,
 				score: 0,
-				metadata: metadata,
+				metadata,
 			}
 		}
 
@@ -67,7 +66,7 @@ pub mod pallet {
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_utils::Config{
+	pub trait Config: frame_system::Config + pallet_utils::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 	}
@@ -90,7 +89,8 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn items_by_accountid)]
-	pub type ItemsByAccountId<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, Vec<TypeID>, ValueQuery>;
+	pub type ItemsByAccountId<T: Config> =
+		StorageMap<_, Twox64Concat, T::AccountId, Vec<TypeID>, ValueQuery>;
 
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/v3/runtime/events-and-errors
@@ -118,19 +118,34 @@ pub mod pallet {
 		/// An example dispatchable that takes a singles value as a parameter, writes the value to
 		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
 		#[pallet::weight(10_000)]
-		pub fn create_item(origin: OriginFor<T>, _account_id: T::AccountId, _metadata: String, _org_date: 
-			Option<UnixEpoch>, _exp_date: Option<UnixEpoch>,
-			_certificated_id: Option<TypeID>) -> DispatchResult {
+		pub fn create_item(
+			origin: OriginFor<T>,
+			_account_id: T::AccountId,
+			_metadata: String,
+			_org_date: Option<UnixEpoch>,
+			_exp_date: Option<UnixEpoch>,
+			_certificated_id: Option<TypeID>,
+		) -> DispatchResult {
 			// Check that the extrinsic was signed and get the signer.
 			// This function will return an error if the extrinsic is not signed.
 			// https://docs.substrate.io/v3/runtime/origins
 			let who = ensure_signed(origin)?;
 			let item_id = Self::item_id();
-			let new_item: Item<T> = Item::new(item_id, _account_id.clone(), who.clone(), _org_date, _exp_date,
-		_certificated_id, 0, _metadata);
+			let new_item: Item<T> = Item::new(
+				item_id,
+				_account_id.clone(),
+				who.clone(),
+				_org_date,
+				_exp_date,
+				_certificated_id,
+				0,
+				_metadata,
+			);
 			<ItemById<T>>::insert(item_id, new_item);
 			<ItemsByAccountId<T>>::mutate(who, |x| x.push(item_id));
-			<ItemId<T>>::mutate(|n| { *n += 1; });
+			<ItemId<T>>::mutate(|n| {
+				*n += 1;
+			});
 			// Emit an event.
 			Self::deposit_event(Event::CreateSucceed(item_id));
 			// Return a successful DispatchResultWithPostInfo
@@ -144,11 +159,10 @@ pub mod pallet {
 			// https://docs.substrate.io/v3/runtime/origins
 			let who = ensure_signed(origin)?;
 
-			let item_idx = Self::items_by_accountid(&who).iter()
-			.position(|x| { *x == _item_id });
+			let item_idx = Self::items_by_accountid(&who).iter().position(|x| *x == _item_id);
 			ensure!(item_idx != None, Error::<T>::ItemNotFound);
 			if let Some(iid) = item_idx {
-				<ItemsByAccountId<T>>::mutate(&who, |x| { x.swap_remove(iid) });
+				<ItemsByAccountId<T>>::mutate(&who, |x| x.swap_remove(iid));
 			}
 			<ItemById<T>>::remove(_item_id);
 			// Emit an event.
@@ -156,6 +170,5 @@ pub mod pallet {
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
 		}
-
 	}
 }
