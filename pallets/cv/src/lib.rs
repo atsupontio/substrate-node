@@ -18,15 +18,15 @@ mod benchmarking;
 pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	use utils::{Content, TypeID};
+	use utils::{Content, TypeID, UnixEpoch};
 	use std::collections::BTreeSet;
 
 	pub struct Item<T::Config> {
 		item_id: TypeID,
 		user_id: T::AccountId,
 		created: WhoAndWhen<T>,
-		org_date: Option<T::Moment>,
-		exp_date: Option<T::Moment>,
+		org_date: UnixEpoch,
+		exp_date: UnixEpoch,
 		certificate_id: Option<TypeID>,
 		score: u32,
 		metadata: Content,
@@ -38,8 +38,8 @@ pub mod pallet {
 			id: TypeID,
 			user_id: T::AccountId,
 			created_by: T::AccountId,
-			org_date: Option<T::Moment> = None,
-			exp_date: Option<T::Moment> = None,
+			org_date: Option<UnixEpoch> = None,
+			exp_date: Option<UnixEpoch> = None,
 			certificated: Option<Certificate> = None,
 			score: u32,
 			metadata: Content
@@ -106,7 +106,7 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		/// Error names should be descriptive.
-		NoneValue,
+		ItemNotFound(TypeID),
 		/// Errors should have helpful documentation associated with them.
 		StorageOverflow,
 	}
@@ -119,7 +119,7 @@ pub mod pallet {
 		/// An example dispatchable that takes a singles value as a parameter, writes the value to
 		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
 		#[pallet::weight(10_000)]
-		pub fn create_item(origin: OriginFor<T>, _account_id: AccountId, _metadata: Content, _org_date: T::Moment, _exp_date: T::Moment,
+		pub fn create_item(origin: OriginFor<T>, _account_id: AccountId, _metadata: Content, _org_date: UnixEpoch, _exp_date: UnixEpoch,
 			_certificated_id: TypeID) -> DispatchResult {
 			// Check that the extrinsic was signed and get the signer.
 			// This function will return an error if the extrinsic is not signed.
@@ -147,7 +147,7 @@ pub mod pallet {
 
 			let item_idx = Self::items_by_accountid(&who).iter()
 			.position(|x| { *x == _item_id });
-
+			ensure!(item_idx != None, Error::<T>::ItemNotFound(_item_id));
 			if let Some(iid) = item_idx {
 				<ItemsByAccountId<T>>::try_mutate(&who, |x| { x.swap_remove(iid) });
 			}

@@ -8,6 +8,7 @@ mod mock;
 mod tests;
 
 pub type TypeID = u32;
+pub type UnixEpoch = u64;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -19,7 +20,7 @@ pub mod pallet {
         },
     };
     use frame_system as system;
-    
+
 
     #[cfg(feature = "std")]
     use serde::{Deserialize};
@@ -71,7 +72,7 @@ pub mod pallet {
         }
     }
 
-    
+
 
     impl<AccountId> User<AccountId> {
         pub fn maybe_account(self) -> Option<AccountId> {
