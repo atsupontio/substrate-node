@@ -6,8 +6,9 @@ mod mock;
 
 #[cfg(test)]
 mod tests;
-
+use frame_support::inherent::Vec;
 pub type TypeID = u32;
+pub type String = Vec<u8>;
 
 #[frame_support::pallet]
 pub mod pallet {
