@@ -94,9 +94,12 @@ pub mod pallet {
 			// Update storage.
 			<CertificateById<T>>::insert(cid, Certificate {
 				cid: cid,
-				org: who,
+				org: who.clone(),
 				metadata: _meta_data,
 				scrore: 5,
+			});
+            <CertificateId<T>>::mutate(|n| {
+				*n += 1;
 			});
 			// Emit an event.
 			Self::deposit_event(Event::CertificateCreated(who));
