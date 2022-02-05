@@ -47,12 +47,18 @@ pub mod pallet {
 	// https://docs.substrate.io/v3/runtime/storage#declaring-storage-items
 	pub type AccountStorage<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, Account<T>, OptionQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn account_role)]
+	// Learn more about declaring storage items:
+	// https://docs.substrate.io/v3/runtime/storage#declaring-storage-items
+	pub type AccountRole<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, Role, OptionQuery>;
+
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/v3/runtime/events-and-errors
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		AccountRegisted(T::AccountId),
+		AccountRegisted,
 		AccountUpdated(T::AccountId),
 	}
 
@@ -86,11 +92,12 @@ pub mod pallet {
 						status: Status::Active,
 						metadata: metadata,
 					});
-					Self::deposit_event(Event::AccountRegisted(who));
+					<AccountRole<T>>::insert(who, role.clone());
 				},
 				Ok(_) => Err(Error::<T>::AlreadyRegistered)?
 			}
 			// Return a successful DispatchResultWithPostInfo
+			Self::deposit_event(Event::AccountRegisted);
 			Ok(())
 		}
 		// TODO

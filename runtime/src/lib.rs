@@ -282,6 +282,10 @@ impl pallet_account::Config for Runtime {
 	type Event = Event;
 }
 
+impl pallet_cv::Config for Runtime {
+	type Event = Event;
+}
+
 impl pallet_certificate::Config for Runtime {
 	type Event = Event;
 }
@@ -307,6 +311,7 @@ construct_runtime!(
 		//scv-chian pallets
 		Account: pallet_account,
 		Utils: pallet_utils,
+		Cv: pallet_cv,
         Certificate: pallet_certificate,
 
 	}
