@@ -286,6 +286,12 @@ impl pallet_cv::Config for Runtime {
 	type Event = Event;
 }
 
+impl pallet_certificate::Config for Runtime {
+	type Event = Event;
+}
+
+
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -306,6 +312,7 @@ construct_runtime!(
 		Account: pallet_account,
 		Utils: pallet_utils,
 		Cv: pallet_cv,
+        Certificate: pallet_certificate,
 
 	}
 );

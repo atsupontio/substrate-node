@@ -50,6 +50,7 @@ pallet-utils = { version = "0.0.1", default-features = false, path = "../pallets
 pallet-account = { version = "1.0.0", default-features = false, path = "../pallets/account" }
 pallet-cv = { version = "1.0.0", default-features = false, path = "../pallets/cv" }
 
+pallet-certificate = { version = "1.0.0", default-features = false, path = "../pallets/certificate" }
 
 [build-dependencies]
 substrate-wasm-builder = { version = "5.0.0-dev", git = "https://github.com/paritytech/substrate.git", tag = "devhub/latest" }
@@ -72,7 +73,11 @@ std = [
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
 	"pallet-utils/std",
+<<<<<<< HEAD
 	"pallet-cv/std",
+=======
+    "pallet-certificate/std",
+>>>>>>> develop
 	"sp-api/std",
 	"sp-block-builder/std",
 	"sp-consensus-aura/std",
