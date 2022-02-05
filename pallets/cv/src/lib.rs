@@ -19,7 +19,6 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	use frame_support::inherent::Vec;
 
-
 	#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
 	#[scale_info(bounds(), skip_type_params(T))]
 	pub struct Item<T: Config> {
