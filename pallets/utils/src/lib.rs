@@ -7,6 +7,8 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+use frame_support::inherent::Vec;
+
 pub type TypeID = u32;
 pub type UnixEpoch = u64;
 pub type String = Vec<u8>;
@@ -47,7 +49,7 @@ pub mod pallet {
 		Account(AccountId),
 	}
 
-	#[derive(Encode, Decode, Ord, PartialOrd, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+	#[derive(Copy, Encode, Decode, Ord, PartialOrd, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
 	pub enum Role {
 		Organization,
 		SysMan,

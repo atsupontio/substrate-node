@@ -17,6 +17,8 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use pallet_utils::{String, TypeID, UnixEpoch, WhoAndWhen};
 	use scale_info::TypeInfo;
+	use frame_support::inherent::Vec;
+
 
 	#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
 	#[scale_info(bounds(), skip_type_params(T))]
@@ -38,18 +40,18 @@ pub mod pallet {
 			created_by: T::AccountId,
 			org_date: Option<UnixEpoch>,
 			exp_date: Option<UnixEpoch>,
-			certificated: Option<TypeID>,
+			certificate_id: Option<TypeID>,
 			score: u32,
 			metadata: String,
 		) -> Self {
 			Item {
 				item_id: id,
-				user_id: created_by.clone(),
+				user_id,
 				created: WhoAndWhen::<T>::new(created_by.clone()),
 				org_date,
 				exp_date,
-				certificate_id: None,
-				score: 0,
+				certificate_id,
+				score,
 				metadata,
 			}
 		}
