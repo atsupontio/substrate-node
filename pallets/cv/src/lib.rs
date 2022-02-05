@@ -65,6 +65,18 @@ pub mod pallet {
 		// }
 	}
 
+	#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+	pub enum Status {
+		Pending,
+		Allow,
+		Deny,
+	}
+	impl Default for Status {
+		fn default() -> Self {
+            Self::Pending
+        }
+	}
+
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_utils::Config {
@@ -89,6 +101,10 @@ pub mod pallet {
 	pub type ItemById<T> = StorageMap<_, Twox64Concat, TypeID, Item<T>, OptionQuery>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn item_status_by_item_id)]
+	pub type ItemStatusByItemId<T> = StorageMap<_, Twox64Concat, TypeID, Status, ValueQuery>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn items_by_accountid)]
 	pub type ItemsByAccountId<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, Vec<TypeID>, ValueQuery>;
@@ -100,6 +116,7 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		RevokeSucceed(TypeID),
 		CreateSucceed(TypeID),
+		SetStatusSucceed(TypeID),
 	}
 
 	// Errors inform users that something went wrong.
@@ -169,6 +186,24 @@ pub mod pallet {
 			// Emit an event.
 			Self::deposit_event(Event::RevokeSucceed(_item_id));
 			// Return a successful DispatchResultWithPostInfo
+			Ok(())
+		}
+
+		#[pallet::weight(1000)]
+		pub fn set_status_item(origin: OriginFor<T>, _item_id: TypeID, status: Status) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let item_idx = Self::items_by_accountid(&who).iter()
+			.position(|x| { *x == _item_id });
+			ensure!(item_idx != None, Error::<T>::ItemNotFound);
+			match <ItemStatusByItemId<T>>::contains_key(_item_id) {
+				true => {
+					<ItemStatusByItemId<T>>::mutate(_item_id, |x| *x = status);
+				},
+				_ => {
+					<ItemStatusByItemId<T>>::insert(_item_id, status);
+				}
+			}
+			Self::deposit_event(Event::SetStatusSucceed(_item_id));
 			Ok(())
 		}
 	}
