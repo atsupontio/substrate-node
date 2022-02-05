@@ -11,35 +11,64 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
-
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	use utils::{Content, TypeID};
-	use std::collections::BTreeSet;
+	use pallet_utils::{String, TypeID, UnixEpoch, WhoAndWhen};
+	use scale_info::TypeInfo;
+	use frame_support::inherent::Vec;
 
-	pub struct Item<T::Config> {
+
+	#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+	#[scale_info(bounds(), skip_type_params(T))]
+	pub struct Item<T: Config> {
 		item_id: TypeID,
 		user_id: T::AccountId,
 		created: WhoAndWhen<T>,
-		org_date: Option(T::Moment),
-		exp_date: Option(T::Moment),
-		certificated: Option(Certificate),
-		metadata: Content,
+		org_date: Option<UnixEpoch>,
+		exp_date: Option<UnixEpoch>,
+		certificate_id: Option<TypeID>,
+		score: u32,
+		metadata: String,
 	}
 
-	impl Item<T> {
-		fn new(_item_id: TypeID, _user_id: T::AccountId, _metadata: String) {
-
+	impl<T: Config> Item<T> {
+		pub fn new(
+			id: TypeID,
+			user_id: T::AccountId,
+			created_by: T::AccountId,
+			org_date: Option<UnixEpoch>,
+			exp_date: Option<UnixEpoch>,
+			certificate_id: Option<TypeID>,
+			score: u32,
+			metadata: String,
+		) -> Self {
+			Item {
+				item_id: id,
+				user_id,
+				created: WhoAndWhen::<T>::new(created_by.clone()),
+				org_date,
+				exp_date,
+				certificate_id,
+				score,
+				metadata,
+			}
 		}
+
+		// pub fn ensure_owner(&self, account: &T::AccountId) -> DispatchResult {
+		// 	ensure!(self.is_owner(account), Error::<T>::NotAPostOwner);
+		// 	Ok(())
+		// }
+
+		// pub fn is_owner(&self, account: &T::AccountId) -> bool {
+		// 	self.owner == *account
+		// }
 	}
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + pallet_utils::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 	}
@@ -51,18 +80,19 @@ pub mod pallet {
 	// The pallet's runtime storage items.
 	// https://docs.substrate.io/v3/runtime/storage
 	#[pallet::storage]
-	#[pallet::getter(fn itemid)]
+	#[pallet::getter(fn item_id)]
 	// Learn more about declaring storage items:
 	// https://docs.substrate.io/v3/runtime/storage#declaring-storage-items
-	pub type ItemId<T> = StorageValue<_, u64>;
+	pub type ItemId<T> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn item_by_id)]
-	pub type ItemById<T> = StorageMap<_, twox_64_concat, TypeID, Item<T>, OptionQuery>;
+	pub type ItemById<T> = StorageMap<_, Twox64Concat, TypeID, Item<T>, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn items_by_accountid)]
-	pub type ItemsByAccountId<T> = StorageMap<_, twox_64_concat, T::AccountId, Vec<Item<T>>, ValueQuery>;
+	pub type ItemsByAccountId<T: Config> =
+		StorageMap<_, Twox64Concat, T::AccountId, Vec<TypeID>, ValueQuery>;
 
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/v3/runtime/events-and-errors
@@ -77,7 +107,7 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		/// Error names should be descriptive.
-		NoneValue,
+		ItemNotFound,
 		/// Errors should have helpful documentation associated with them.
 		StorageOverflow,
 	}
@@ -90,21 +120,34 @@ pub mod pallet {
 		/// An example dispatchable that takes a singles value as a parameter, writes the value to
 		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
 		#[pallet::weight(10_000)]
-		pub fn create_item(origin: OriginFor<T>, _account_id: AccountId, _metadata: String) -> DispatchResult {
+		pub fn create_item(
+			origin: OriginFor<T>,
+			_account_id: T::AccountId,
+			_metadata: String,
+			_org_date: Option<UnixEpoch>,
+			_exp_date: Option<UnixEpoch>,
+			_certificated_id: Option<TypeID>,
+		) -> DispatchResult {
 			// Check that the extrinsic was signed and get the signer.
 			// This function will return an error if the extrinsic is not signed.
 			// https://docs.substrate.io/v3/runtime/origins
 			let who = ensure_signed(origin)?;
 			let item_id = Self::item_id();
-			let new_item: Item<T> = Item{
-				item_id: item_id,
-				account_id: _account_id,
-				created: who.clone(),
-				metadata: _metadata,
-			};
-			// Update storage.
-			<ItemById<T>>::insert(_item_id, new_item.clone());
-
+			let new_item: Item<T> = Item::new(
+				item_id,
+				_account_id.clone(),
+				who.clone(),
+				_org_date,
+				_exp_date,
+				_certificated_id,
+				0,
+				_metadata,
+			);
+			<ItemById<T>>::insert(item_id, new_item);
+			<ItemsByAccountId<T>>::mutate(who, |x| x.push(item_id));
+			<ItemId<T>>::mutate(|n| {
+				*n += 1;
+			});
 			// Emit an event.
 			Self::deposit_event(Event::CreateSucceed(item_id));
 			// Return a successful DispatchResultWithPostInfo
