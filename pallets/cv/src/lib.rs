@@ -58,7 +58,11 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn item_by_id)]
+<<<<<<< HEAD
 	pub type ItemById<T> = StorageMap<_, twox_64_concat, TypeID, Item<T>, OptionQuery>;
+=======
+	pub type ItemById<T> = StorageMap<_, twox_64_concat, TypeID, Item<T>, ValueQuery>;
+>>>>>>> 0dd8607 (init pallet cv)
 
 	#[pallet::storage]
 	#[pallet::getter(fn items_by_accountid)]
@@ -69,8 +73,14 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
+<<<<<<< HEAD
 		RevokeSucceed(TypeID),
 		CreateSucceed(TypeID),
+=======
+		/// Event documentation should end with an array that provides descriptive names for event
+		/// parameters. [something, who]
+		SomethingStored(u32, T::AccountId),
+>>>>>>> 0dd8607 (init pallet cv)
 	}
 
 	// Errors inform users that something went wrong.
@@ -90,12 +100,17 @@ pub mod pallet {
 		/// An example dispatchable that takes a singles value as a parameter, writes the value to
 		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
 		#[pallet::weight(10_000)]
+<<<<<<< HEAD
 		pub fn create_item(origin: OriginFor<T>, _account_id: AccountId, _metadata: String) -> DispatchResult {
+=======
+		pub fn create_item(origin: OriginFor<T>, account_id: AccountId, metadata: String) -> DispatchResult {
+>>>>>>> 0dd8607 (init pallet cv)
 			// Check that the extrinsic was signed and get the signer.
 			// This function will return an error if the extrinsic is not signed.
 			// https://docs.substrate.io/v3/runtime/origins
 			let who = ensure_signed(origin)?;
 			let item_id = Self::item_id();
+<<<<<<< HEAD
 			let new_item: Item<T> = Item{
 				item_id: item_id,
 				account_id: _account_id,
@@ -104,6 +119,12 @@ pub mod pallet {
 			};
 			// Update storage.
 			<ItemById<T>>::insert(_item_id, new_item.clone());
+=======
+			let certificate =;
+			let new_item: Item<T> = Item::new(item_id, account_id, who.clone(), metadata.clone());
+			// Update storage.
+			<Something<T>>::put(something);
+>>>>>>> 0dd8607 (init pallet cv)
 
 			// Emit an event.
 			Self::deposit_event(Event::CreateSucceed(item_id));
@@ -111,6 +132,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+<<<<<<< HEAD
 		#[pallet::weight(10_000)]
 		pub fn revoke_item(origin: OriginFor<T>, _item_id: TypeID) -> DispatchResult {
 			// Check that the extrinsic was signed and get the signer.
@@ -127,6 +149,8 @@ pub mod pallet {
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
 		}
+=======
+>>>>>>> 0dd8607 (init pallet cv)
 
 	}
 }
