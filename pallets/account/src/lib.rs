@@ -58,7 +58,7 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		AccountRegisted(T::AccountId),
+		AccountRegisted,
 		AccountUpdated(T::AccountId),
 	}
 
@@ -92,12 +92,12 @@ pub mod pallet {
 						status: Status::Active,
 						metadata: metadata,
 					});
-					Self::deposit_event(Event::AccountRegisted(who));
-					<AccountRole<T>>::insert(&who, role);
+					<AccountRole<T>>::insert(who, role.clone());
 				},
 				Ok(_) => Err(Error::<T>::AlreadyRegistered)?
 			}
 			// Return a successful DispatchResultWithPostInfo
+			Self::deposit_event(Event::AccountRegisted);
 			Ok(())
 		}
 		// TODO
