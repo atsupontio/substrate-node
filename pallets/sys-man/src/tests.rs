@@ -22,11 +22,12 @@ fn generate_test_account(
 		level,
 		parent,
 		children,
-		metadata: r#"
+		metadata: str2vec(
+			r#"
 			{
 				"description": "Root authority",
-        	}"#
-		.to_string(),
+        	}"#,
+		),
 	};
 
 	root_authority
@@ -73,7 +74,7 @@ fn approve_sys_man_should_work() {
 		assert_eq!(new_sys_man.role, Role::SysMan);
 		assert_eq!(new_sys_man.status, Status::Active);
 		assert_eq!(new_sys_man.level, Some(1));
-		assert_eq!(str2vec(&new_sys_man.metadata), metadata.clone());
+		assert_eq!(new_sys_man.metadata, metadata.clone());
 	});
 }
 
@@ -259,7 +260,7 @@ fn approve_org_should_work() {
 		assert_eq!(new_org.role, Role::Organization);
 		assert_eq!(new_org.status, Status::Active);
 		assert_eq!(new_org.level, None);
-		assert_eq!(str2vec(&new_org.metadata), metadata.clone());
+		assert_eq!(new_org.metadata, metadata.clone());
 	})
 }
 
@@ -377,7 +378,7 @@ fn revoke_org_should_work() {
 
 		metadata = add_json_field(&metadata, "revoke_description".to_string(), description);
 
-		org.metadata = metadata.to_string();
+		org.metadata = metadata.to_string().as_bytes().to_vec();
 
 		assert_eq!(org, OrgRevoked::<Test>::get(&id).unwrap());
 

@@ -14,12 +14,12 @@ mod benchmarking;
 #[frame_support::pallet]
 pub mod pallet {
 
+	use codec::alloc::string::ToString;
 	use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
 	use pallet_utils::{Role, Status};
 	use scale_info::TypeInfo;
-	// use serde::{Deserialize, Serialize};
-	use codec::alloc::string::ToString;
+	use serde::{Deserialize, Serialize};
 	use serde_json::{json, Value};
 	use sp_std::{str, vec, vec::Vec};
 
@@ -37,6 +37,7 @@ pub mod pallet {
 
 	#[derive(Decode, Encode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
 	#[scale_info(bounds(), skip_type_params(T))]
+	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 	pub struct SysManAccount<T: Config> {
 		// id: T::AccountId,
 		pub role: Role,
@@ -52,18 +53,22 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
+	#[pallet::getter(fn sys_man)]
 	pub type SysMan<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, SysManAccount<T>, OptionQuery>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn sys_man_revoked)]
 	pub type SysManRevoked<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, SysManAccount<T>, OptionQuery>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn org)]
 	pub type Org<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, SysManAccount<T>, OptionQuery>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn org_revoked)]
 	pub type OrgRevoked<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, SysManAccount<T>, OptionQuery>;
 
@@ -76,6 +81,27 @@ pub mod pallet {
 	#[pallet::getter(fn org_cnt)]
 	/// Keeps track of the number of system managers in existence.
 	pub(super) type OrgCnt<T: Config> = StorageValue<_, u64, ValueQuery>;
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub sys_man: Vec<(T::AccountId, SysManAccount<T>)>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> GenesisConfig<T> {
+			Self { sys_man: Default::default() }
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			for (account_id, sys_man_account) in &self.sys_man {
+				SysMan::<T>::insert(account_id, sys_man_account);
+			}
+		}
+	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]

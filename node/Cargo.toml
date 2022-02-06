@@ -55,6 +55,10 @@ frame-benchmarking-cli = { version = "4.0.0-dev", git = "https://github.com/pari
 # SCV Dependencies
 scv-node = { version = "4.0.0-dev", path = "../runtime" }
 
+pallet-utils = { version = "0.0.1", path = "../pallets/utils"}
+
+pallet-sys-man = { version = "0.0.1", path = "../pallets/sys-man"}
+
 [build-dependencies]
 substrate-build-script-utils = { version = "3.0.0", git = "https://github.com/paritytech/substrate.git", tag = "devhub/latest" }
 
