@@ -20,7 +20,7 @@ default-features = false
 [dependencies.serde]
 default-features = false
 version = "1.0"
-features = ["derive"]
+# features = ["derive"]
 
 [dependencies.log]
 version = "0.4.0"
@@ -28,6 +28,7 @@ version = "0.4.0"
 [dependencies.serde_json]
 default-features = false
 version = "1.0"
+features = ["alloc"]
 
 [dependencies.codec]
 package = "parity-scale-codec"
@@ -79,6 +80,12 @@ version = "4.0.0-dev"
 git = "https://github.com/paritytech/substrate.git"
 tag = "devhub/latest"
 
+[dependencies.sp-std]
+default-features = false
+version = "4.0.0-dev"
+git = "https://github.com/paritytech/substrate.git"
+tag = "devhub/latest"
+
 [features]
 default = ["std"]
 
@@ -90,7 +97,8 @@ std = [
 	"scale-info/std",
 	"frame-benchmarking/std",
 	"frame-support/std",
-	"frame-system/std"
+	"frame-system/std",
+	"sp-std/std"
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

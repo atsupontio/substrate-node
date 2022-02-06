@@ -10,6 +10,7 @@ mod tests;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+
 #[frame_support::pallet]
 pub mod pallet {
 
@@ -18,7 +19,11 @@ pub mod pallet {
 	use pallet_utils::{Role, Status};
 	use scale_info::TypeInfo;
 	// use serde::{Deserialize, Serialize};
+	use codec::alloc::string::ToString;
 	use serde_json::{json, Value};
+	use sp_std::{str, vec, vec::Vec};
+
+	// pub type String = Vec<u8>;
 
 	pub enum OperationType {
 		SYS,
@@ -39,7 +44,7 @@ pub mod pallet {
 		pub level: Option<u8>,
 		pub parent: Option<T::AccountId>,
 		pub children: Option<Vec<T::AccountId>>,
-		pub metadata: String,
+		pub metadata: Vec<u8>,
 	}
 
 	#[pallet::pallet]
@@ -195,11 +200,11 @@ pub mod pallet {
 
 			metadata = Self::add_json_field(
 				&metadata,
-				"revoke_description".to_string(),
-				&String::from_utf8(description).unwrap(),
+				"revoke_description",
+				&str::from_utf8(&description).unwrap(),
 			);
 
-			revoke_org.metadata = metadata.to_string();
+			revoke_org.metadata = metadata.to_string().as_bytes().to_vec();
 
 			// remove revoked sys man from Org Storage
 			Org::<T>::remove(&revoke_org_id);
@@ -240,13 +245,13 @@ pub mod pallet {
 
 			metadata = Self::add_json_field(
 				&metadata,
-				"revoke_description".to_string(),
-				&String::from_utf8(description).unwrap(),
+				"revoke_description",
+				&str::from_utf8(&description).unwrap(),
 			);
 
 			// metadata["revoke_description"] = Value::String(String::from_utf8(description).unwrap());
 
-			revoke_sys_man.metadata = metadata.to_string();
+			revoke_sys_man.metadata = metadata.to_string().as_bytes().to_vec();
 
 			// remove revoked sys man from SysMan Storage
 			SysMan::<T>::remove(&revoke_id);
@@ -271,21 +276,9 @@ pub mod pallet {
 			parent: Option<T::AccountId>,
 			metadata: Vec<u8>,
 		) -> Result<SysManAccount<T>, Error<T>> {
-			let metadata_string = match String::from_utf8(metadata) {
-				Ok(v) => v,
-				Err(_) => Err(Error::<T>::ConvertMetadataFailed)?,
-			};
-
 			// TODO: validate metadata to be a valid JSON string
 
-			let sys_man = SysManAccount::<T> {
-				role,
-				status,
-				level,
-				children,
-				parent,
-				metadata: metadata_string,
-			};
+			let sys_man = SysManAccount::<T> { role, status, level, children, parent, metadata };
 
 			Ok(sys_man)
 		}
@@ -319,12 +312,12 @@ pub mod pallet {
 			s.as_bytes().to_vec()
 		}
 
-		fn add_json_field(v: &Value, field_key: String, field_val: &str) -> Value {
+		fn add_json_field(v: &Value, field_key: &str, field_val: &str) -> Value {
 			match v {
 				Value::Object(map) => {
 					let mut map = map.clone();
 
-					map.insert(field_key.clone(), Value::String(field_val.to_string()));
+					map.insert(field_key.to_string(), Value::String(field_val.to_string()));
 
 					Value::Object(map)
 				},
