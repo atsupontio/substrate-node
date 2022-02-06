@@ -7,7 +7,11 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+use frame_support::inherent::Vec;
+
 pub type TypeID = u32;
+pub type UnixEpoch = u64;
+pub type String = Vec<u8>;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -23,6 +27,7 @@ pub mod pallet {
 	use sp_std::prelude::*;
 
 	#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+	#[scale_info(bounds(), skip_type_params(T))]
 	pub struct WhoAndWhen<T: Config> {
 		pub account: T::AccountId,
 		pub block: T::BlockNumber,

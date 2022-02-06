@@ -1,8 +1,8 @@
 [package]
-name = "pallet-template"
-version = "4.0.0-dev"
-description = "FRAME pallet template for defining custom runtime logic."
-authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
+name = "pallet-cv"
+version = "1.0.0"
+description = "FRAME pallet cv for defining custom runtime logic."
+authors = ["hoangtheanhhp <https://github.com/hoangtheanhhp>"]
 homepage = "https://substrate.io/"
 edition = "2021"
 license = "Unlicense"
@@ -24,6 +24,7 @@ frame-benchmarking = { default-features = false, version = "4.0.0-dev", git = "h
 sp-core = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", tag = "devhub/latest" }
 sp-io = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", tag = "devhub/latest" }
 sp-runtime = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", tag = "devhub/latest" }
+pallet-utils = { version = "0.0.1", default-features = false, path = "../utils" }
 
 [features]
 default = ["std"]
@@ -33,6 +34,7 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"frame-benchmarking/std",
+	"pallet-utils/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

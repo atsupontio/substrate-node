@@ -89,8 +89,8 @@ pub mod opaque {
 //   https://docs.substrate.io/v3/runtime/upgrades#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("node-template"),
-	impl_name: create_runtime_str!("node-template"),
+	spec_name: create_runtime_str!("scv-chain"),
+	impl_name: create_runtime_str!("scv-chain"),
 	authoring_version: 1,
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
@@ -286,6 +286,14 @@ impl pallet_sys_man::Config for Runtime {
 	type Event = Event;
 }
 
+impl pallet_cv::Config for Runtime {
+	type Event = Event;
+}
+
+impl pallet_certificate::Config for Runtime {
+	type Event = Event;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -305,7 +313,9 @@ construct_runtime!(
 		//scv-chian pallets
 		Account: pallet_account,
 		Utils: pallet_utils,
-		SysMan: pallet_sys_man
+		SysMan: pallet_sys_man,
+		Cv: pallet_cv,
+		Certificate: pallet_certificate,
 
 	}
 );
