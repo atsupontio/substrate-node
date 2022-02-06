@@ -10,15 +10,20 @@ mod tests;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+
 #[frame_support::pallet]
 pub mod pallet {
 
+	use codec::alloc::string::ToString;
 	use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
 	use pallet_utils::{Role, Status};
 	use scale_info::TypeInfo;
-	// use serde::{Deserialize, Serialize};
+	use serde::{Deserialize, Serialize};
 	use serde_json::{json, Value};
+	use sp_std::{str, vec, vec::Vec};
+
+	// pub type String = Vec<u8>;
 
 	pub enum OperationType {
 		SYS,
@@ -32,6 +37,7 @@ pub mod pallet {
 
 	#[derive(Decode, Encode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
 	#[scale_info(bounds(), skip_type_params(T))]
+	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 	pub struct SysManAccount<T: Config> {
 		// id: T::AccountId,
 		pub role: Role,
@@ -39,7 +45,7 @@ pub mod pallet {
 		pub level: Option<u8>,
 		pub parent: Option<T::AccountId>,
 		pub children: Option<Vec<T::AccountId>>,
-		pub metadata: String,
+		pub metadata: Vec<u8>,
 	}
 
 	#[pallet::pallet]
@@ -47,18 +53,22 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
+	#[pallet::getter(fn sys_man)]
 	pub type SysMan<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, SysManAccount<T>, OptionQuery>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn sys_man_revoked)]
 	pub type SysManRevoked<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, SysManAccount<T>, OptionQuery>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn org)]
 	pub type Org<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, SysManAccount<T>, OptionQuery>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn org_revoked)]
 	pub type OrgRevoked<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, SysManAccount<T>, OptionQuery>;
 
@@ -71,6 +81,27 @@ pub mod pallet {
 	#[pallet::getter(fn org_cnt)]
 	/// Keeps track of the number of system managers in existence.
 	pub(super) type OrgCnt<T: Config> = StorageValue<_, u64, ValueQuery>;
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub sys_man: Vec<(T::AccountId, SysManAccount<T>)>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> GenesisConfig<T> {
+			Self { sys_man: Default::default() }
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			for (account_id, sys_man_account) in &self.sys_man {
+				SysMan::<T>::insert(account_id, sys_man_account);
+			}
+		}
+	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -195,11 +226,11 @@ pub mod pallet {
 
 			metadata = Self::add_json_field(
 				&metadata,
-				"revoke_description".to_string(),
-				&String::from_utf8(description).unwrap(),
+				"revoke_description",
+				&str::from_utf8(&description).unwrap(),
 			);
 
-			revoke_org.metadata = metadata.to_string();
+			revoke_org.metadata = metadata.to_string().as_bytes().to_vec();
 
 			// remove revoked sys man from Org Storage
 			Org::<T>::remove(&revoke_org_id);
@@ -240,13 +271,13 @@ pub mod pallet {
 
 			metadata = Self::add_json_field(
 				&metadata,
-				"revoke_description".to_string(),
-				&String::from_utf8(description).unwrap(),
+				"revoke_description",
+				&str::from_utf8(&description).unwrap(),
 			);
 
 			// metadata["revoke_description"] = Value::String(String::from_utf8(description).unwrap());
 
-			revoke_sys_man.metadata = metadata.to_string();
+			revoke_sys_man.metadata = metadata.to_string().as_bytes().to_vec();
 
 			// remove revoked sys man from SysMan Storage
 			SysMan::<T>::remove(&revoke_id);
@@ -271,21 +302,9 @@ pub mod pallet {
 			parent: Option<T::AccountId>,
 			metadata: Vec<u8>,
 		) -> Result<SysManAccount<T>, Error<T>> {
-			let metadata_string = match String::from_utf8(metadata) {
-				Ok(v) => v,
-				Err(_) => Err(Error::<T>::ConvertMetadataFailed)?,
-			};
-
 			// TODO: validate metadata to be a valid JSON string
 
-			let sys_man = SysManAccount::<T> {
-				role,
-				status,
-				level,
-				children,
-				parent,
-				metadata: metadata_string,
-			};
+			let sys_man = SysManAccount::<T> { role, status, level, children, parent, metadata };
 
 			Ok(sys_man)
 		}
@@ -319,12 +338,12 @@ pub mod pallet {
 			s.as_bytes().to_vec()
 		}
 
-		fn add_json_field(v: &Value, field_key: String, field_val: &str) -> Value {
+		fn add_json_field(v: &Value, field_key: &str, field_val: &str) -> Value {
 			match v {
 				Value::Object(map) => {
 					let mut map = map.clone();
 
-					map.insert(field_key.clone(), Value::String(field_val.to_string()));
+					map.insert(field_key.to_string(), Value::String(field_val.to_string()));
 
 					Value::Object(map)
 				},

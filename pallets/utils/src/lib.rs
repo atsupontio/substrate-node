@@ -22,7 +22,7 @@ pub mod pallet {
 
 	use scale_info::TypeInfo;
 	#[cfg(feature = "std")]
-	use serde::Deserialize;
+	use serde::{Deserialize, Serialize};
 	use sp_runtime::RuntimeDebug;
 	use sp_std::prelude::*;
 
@@ -49,7 +49,8 @@ pub mod pallet {
 		Account(AccountId),
 	}
 
-	#[derive(Copy, Encode, Decode, Ord, PartialOrd, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+	#[derive(Encode, Decode, Ord, PartialOrd, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 	pub enum Role {
 		Organization,
 		SysMan,
@@ -57,6 +58,7 @@ pub mod pallet {
 	}
 
 	#[derive(Encode, Decode, Ord, PartialOrd, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 	pub enum Status {
 		Active,
 		Revoked,

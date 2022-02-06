@@ -282,6 +282,10 @@ impl pallet_account::Config for Runtime {
 	type Event = Event;
 }
 
+impl pallet_sys_man::Config for Runtime {
+	type Event = Event;
+}
+
 impl pallet_cv::Config for Runtime {
 	type Event = Event;
 }
@@ -289,8 +293,6 @@ impl pallet_cv::Config for Runtime {
 impl pallet_certificate::Config for Runtime {
 	type Event = Event;
 }
-
-
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -311,8 +313,9 @@ construct_runtime!(
 		//scv-chian pallets
 		Account: pallet_account,
 		Utils: pallet_utils,
+		SysMan: pallet_sys_man,
 		Cv: pallet_cv,
-        Certificate: pallet_certificate,
+		Certificate: pallet_certificate,
 
 	}
 );
