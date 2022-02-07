@@ -28,7 +28,6 @@ pub mod pallet {
 		org_date: Option<UnixEpoch>,
 		exp_date: Option<UnixEpoch>,
 		certificate_id: Option<TypeID>,
-		score: u32,
 		metadata: String,
 	}
 
@@ -160,7 +159,7 @@ pub mod pallet {
 				_metadata,
 			);
 			<ItemById<T>>::insert(item_id, new_item);
-			<ItemsByAccountId<T>>::mutate(who, |x| x.push(item_id));
+			<ItemsByAccountId<T>>::mutate(_account_id, |x| x.push(item_id));
 			<ItemId<T>>::mutate(|n| {
 				*n += 1;
 			});
