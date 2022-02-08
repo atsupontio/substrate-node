@@ -54,14 +54,14 @@ pub mod pallet {
 			}
 		}
 
-		// pub fn ensure_owner(&self, account: &T::AccountId) -> DispatchResult {
-		// 	ensure!(self.is_owner(account), Error::<T>::NotAPostOwner);
-		// 	Ok(())
-		// }
+		pub fn ensure_owner(&self, account: &T::AccountId) -> DispatchResult {
+			ensure!(self.is_owner(account), Error::<T>::NotOwner);
+			Ok(())
+		}
 
-		// pub fn is_owner(&self, account: &T::AccountId) -> bool {
-		// 	self.owner == *account
-		// }
+		pub fn is_owner(&self, account: &T::AccountId) -> bool {
+			self.user_id == *account
+		}
 	}
 
 	#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
@@ -125,6 +125,8 @@ pub mod pallet {
 		ItemNotFound,
 		/// Errors should have helpful documentation associated with them.
 		StorageOverflow,
+		/// Error Account doesn't own this cv item.
+		NotOwner,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
