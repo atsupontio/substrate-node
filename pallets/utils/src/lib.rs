@@ -19,6 +19,7 @@ pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_support::traits::Currency;
 	use frame_system as system;
+	use serde_json::{Value, Error};
 
 	use scale_info::TypeInfo;
 	#[cfg(feature = "std")]
@@ -205,6 +206,7 @@ pub mod pallet {
     	}
 
 		pub fn ensure_metadata_is_valid(metadata: String) -> DispatchResult {
+			let parsed: Value = serde_json::from_str(metadata)?;
 			Ok(())
     	}
 
