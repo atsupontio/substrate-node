@@ -185,4 +185,28 @@ pub mod pallet {
 		/// Content type is `None`.
 		ContentIsEmpty,
 	}
+
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+
+		pub fn ensure_content_is_valid(content: Content) -> DispatchResult {
+			match content {
+				Content::None => Ok(()),
+				Content::Raw(_) => Err(Error::<T>::RawContentTypeNotSupported.into()),
+				Content::IPFS(ipfs_cid) => {
+					let len = ipfs_cid.len();
+					// IPFS CID v0 is 46 bytes.
+					// IPFS CID v1 is 59 bytes.df-integration-tests/src/lib.rs:272:5
+					ensure!(len == 46 || len == 59, Error::<T>::InvalidIpfsCid);
+					Ok(())
+				},
+				Content::Hyper(_) => Err(Error::<T>::HypercoreContentTypeNotSupported.into())
+			}
+    	}
+
+		pub fn ensure_metadata_is_valid(metadata: String) -> DispatchResult {
+			Ok(())
+    	}
+
+	}
 }
