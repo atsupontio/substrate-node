@@ -140,41 +140,50 @@ pub mod pallet {
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
 	// These functions materialize as "extrinsics", which are often compared to transactions.
 	// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
-	// #[pallet::call]
-	// impl<T: Config> Pallet<T> {
-	// 	/// An example dispatchable that takes a singles value as a parameter, writes the value to
-	// 	/// storage and emits an event. This function must be dispatched by a signed extrinsic.
-	// 	#[pallet::weight(10_000)]
-	// 	pub fn create_report(origin: OriginFor<T>, _meta_data: String) -> DispatchResult {
-	// 		// Check that the extrinsic was signed and get the signer.
-	// 		// This function will return an error if the extrinsic is not signed.
-	// 		// https://docs.substrate.io/v3/runtime/origins
-	// 		let who = ensure_signed(origin)?;
-	// 		let cid = <ReportId<T>>::get();
-	// 		// Update storage.
-	// 		<ReportById<T>>::insert(cid, Report {
-	// 			cid: cid,
-	// 			org: who.clone(),
-	// 			metadata: _meta_data,
-	// 			scrore: 5,
-	// 		});
-    //         <ReportId<T>>::mutate(|n| {
-	// 			*n += 1;
-	// 		});
-	// 		// Emit an event.
-	// 		Self::deposit_event(Event::ReportCreated(who));
-	// 		// Return a successful DispatchResultWithPostInfo
-	// 		Ok(())
-	// 	}
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+		/// An example dispatchable that takes a singles value as a parameter, writes the value to
+		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
+		#[pallet::weight(10_000)]
+		pub fn create_report(origin: OriginFor<T>,
+            entity: EntityId<T::AccountId>,
+            scope: SpaceId,
+            reason: Content
+        ) -> DispatchResult {
+            let who = ensure_signed(origin)?;
 
-	// 	/// An example dispatchable that may throw a custom error.
-	// 	#[pallet::weight(10_000)]
-	// 	pub fn revoke_report(origin: OriginFor<T>, _cid: TypeID) -> DispatchResult {
-	// 		let _who = ensure_signed(origin)?;
-	// 		<ReportById<T>>::remove(_cid);
-	// 		Self::deposit_event(Event::ReportRevoked(_who));
-	// 		// Return a successful DispatchResultWithPostInfo
-	// 		Ok(())
-	// 	}
-	// }
+            // TODO check this func, if looks strange
+            // Utils::<T>::ensure_content_is_some(&reason).map_err(|_| Error::<T>::ReasonIsEmpty)?;
+
+            // Utils::<T>::is_valid_content(reason.clone())?;
+
+            let not_reported_yet = Self::report_id_by_account_id((&entity, &who)).is_none();
+            ensure!(not_reported_yet, Error::<T>::AlreadyReportedEntity);
+
+            let report_id = Self::report_id();
+            let new_report = Report::<T>::new(report_id, who.clone(), entity.clone(), scope, reason);
+
+            <ReportById<T>>::insert(report_id, new_report);
+            <ReportIdByAccountId<T>>::<T>::insert((&entity, &who), report_id);
+            <ReportId<T>>::mutate(|n| { *n += 1; });
+
+            Self::deposit_event(RawEvent::EntityReported(who, scope, entity, report_id));
+            Ok(())
+        }
+
+		/// Allows a space owner/admin to update the final moderation status of a reported entity.
+        #[weight = 10_000 /* TODO + T::DbWeight::get().reads_writes(_, _) */]
+        pub fn update_entity_status(
+            origin,
+            entity: EntityId<T::AccountId>,
+            status_opt: Option<EntityStatus>
+        ) -> DispatchResult {
+            let who = ensure_signed(origin)?;
+
+            // TODO: add `forbid_content` parameter and track entity Content blocking via OCW
+            //  - `forbid_content` - whether to block `Content` provided with entity
+
+            Self::deposit_event(RawEvent::EntityStatusUpdated(who, scope, entity, status_opt));
+            Ok(())
+        }
 }
