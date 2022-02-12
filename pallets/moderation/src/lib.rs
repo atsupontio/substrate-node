@@ -95,11 +95,11 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> where
-        EntityId : EntityId<<T as system::Config>::AccountId>
+        EntityId<AccountId> : EntityId<<T as system::Config>::AccountId>
     {
         EntityReported(AccountId, EntityId, ReportId),
-        EntityStatusSuggested(AccountId, EntityId, Option<EntityStatus>),
         EntityStatusDeleted(AccountId, EntityId),
+        EntityStatusSuggested(AccountId, EntityId, Option<EntityStatus>),
     }
 
 	// Errors inform users that something went wrong.
@@ -147,7 +147,7 @@ pub mod pallet {
 		pub fn create_report(origin: OriginFor<T>,
             entity: EntityId<T::AccountId>,
             scope: u32,
-            reason: Content
+            reason: String
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
 
@@ -166,7 +166,7 @@ pub mod pallet {
             <ReportIdByAccountId<T>>::insert((&entity, &who), report_id);
             <ReportId<T>>::mutate(|n| { *n += 1; });
 
-            Self::deposit_event(RawEvent::EntityReported(who, scope, entity, report_id));
+            Self::deposit_event(Event::EntityReported(who, scope, entity, report_id));
             Ok(())
         }
 
@@ -182,7 +182,7 @@ pub mod pallet {
             // TODO: add `forbid_content` parameter and track entity Content blocking via OCW
             //  - `forbid_content` - whether to block `Content` provided with entity
 
-            Self::deposit_event(RawEvent::EntityStatusUpdated(who, scope, entity, status_opt));
+            Self::deposit_event(Event::EntityStatusUpdated(who, entity, status_opt));
             Ok(())
         }
 	}
