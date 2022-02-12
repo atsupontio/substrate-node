@@ -147,7 +147,7 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		pub fn create_report(origin: OriginFor<T>,
             entity: EntityId<T::AccountId>,
-            scope: SpaceId,
+            scope: u32,
             reason: Content
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
@@ -164,7 +164,7 @@ pub mod pallet {
             let new_report = Report::<T>::new(report_id, who.clone(), entity.clone(), scope, reason);
 
             <ReportById<T>>::insert(report_id, new_report);
-            <ReportIdByAccountId<T>>::<T>::insert((&entity, &who), report_id);
+            <ReportIdByAccountId<T>>::insert((&entity, &who), report_id);
             <ReportId<T>>::mutate(|n| { *n += 1; });
 
             Self::deposit_event(RawEvent::EntityReported(who, scope, entity, report_id));
@@ -174,7 +174,7 @@ pub mod pallet {
 		/// Allows a space owner/admin to update the final moderation status of a reported entity.
         #[weight = 10_000 /* TODO + T::DbWeight::get().reads_writes(_, _) */]
         pub fn update_entity_status(
-            origin,
+            origin: OriginFor<T>,
             entity: EntityId<T::AccountId>,
             status_opt: Option<EntityStatus>
         ) -> DispatchResult {
@@ -186,4 +186,5 @@ pub mod pallet {
             Self::deposit_event(RawEvent::EntityStatusUpdated(who, scope, entity, status_opt));
             Ok(())
         }
+	}
 }
