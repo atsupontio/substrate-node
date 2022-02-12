@@ -15,6 +15,7 @@ codec = { package = "parity-scale-codec", version = "2.0.0", default-features = 
 	"derive",
 ] }
 serde = { features = ['derive'], optional = true, version = '1.0.119' }
+serde_json = { version = "1.0.71", default-features = false, features = ["alloc"] }
 
 static_assertions = "1.1.0"
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
@@ -28,11 +29,14 @@ sp-core = { default-features = false, version = "4.0.0-dev", git = "https://gith
 sp-io = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", tag = "devhub/latest" }
 sp-runtime = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", tag = "devhub/latest" }
 sp-std = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", tag = "devhub/latest" }
+
+
 [features]
 default = ["std"]
 std = [
 	"codec/std",
 	"serde/std",
+	"serde_json/std",
 	"scale-info/std",
 	"frame-support/std",
 	"frame-system/std",

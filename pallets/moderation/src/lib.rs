@@ -18,14 +18,14 @@ mod benchmarking;
 pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	use pallet_utils::{Role, Status, TypeID, String};
 	use scale_info::TypeInfo;
+	use pallet_utils::{String, TypeID, WhoAndWhen};
 	use frame_support::inherent::Vec;
 
 	#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
 	pub enum EntityId<AccountId> {
 		Account(AccountId),
-		Item(TypeId),
+		Item(TypeID),
 	}
 
 	/// Entity status is used in two cases: when moderators suggest a moderation status
@@ -95,8 +95,7 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> where
-        AccountId = <T as system::Config>::AccountId,
-        EntityId = EntityId<<T as system::Config>::AccountId>
+        EntityId : EntityId<<T as system::Config>::AccountId>
     {
         EntityReported(AccountId, EntityId, ReportId),
         EntityStatusSuggested(AccountId, EntityId, Option<EntityStatus>),
@@ -172,7 +171,7 @@ pub mod pallet {
         }
 
 		/// Allows a space owner/admin to update the final moderation status of a reported entity.
-        #[weight = 10_000 /* TODO + T::DbWeight::get().reads_writes(_, _) */]
+        #[pallet::weight(10_000)]
         pub fn update_entity_status(
             origin: OriginFor<T>,
             entity: EntityId<T::AccountId>,

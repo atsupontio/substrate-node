@@ -23,6 +23,7 @@ sp-core = { default-features = false, version = "4.0.0-dev", git = "https://gith
 sp-io = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", tag = "devhub/latest" }
 sp-runtime = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", tag = "devhub/latest" }
 pallet-utils = { version = "0.0.1", default-features = false, path = "../utils" }
+serde_json = { version = "1.0.71", default-features = false, features = ["alloc"] }
 
 [features]
 default = ["std"]

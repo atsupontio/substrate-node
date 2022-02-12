@@ -19,7 +19,6 @@ pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_support::traits::Currency;
 	use frame_system as system;
-	use serde_json::{Value, Error};
 
 	use scale_info::TypeInfo;
 	#[cfg(feature = "std")]
@@ -187,28 +186,28 @@ pub mod pallet {
 		ContentIsEmpty,
 	}
 
-	#[pallet::call]
-	impl<T: Config> Pallet<T> {
+	// #[pallet::call]
+	// impl<T: Config> Pallet<T> {
 
-		pub fn ensure_content_is_valid(content: Content) -> DispatchResult {
-			match content {
-				Content::None => Ok(()),
-				Content::Raw(_) => Err(Error::<T>::RawContentTypeNotSupported.into()),
-				Content::IPFS(ipfs_cid) => {
-					let len = ipfs_cid.len();
-					// IPFS CID v0 is 46 bytes.
-					// IPFS CID v1 is 59 bytes.df-integration-tests/src/lib.rs:272:5
-					ensure!(len == 46 || len == 59, Error::<T>::InvalidIpfsCid);
-					Ok(())
-				},
-				Content::Hyper(_) => Err(Error::<T>::HypercoreContentTypeNotSupported.into())
-			}
-    	}
+	// 	pub fn ensure_content_is_valid(content: String) -> DispatchResult {
+	// 		match content {
+	// 			Content::None => Ok(()),
+	// 			Content::Raw(_) => Err(Error::<T>::RawContentTypeNotSupported.into()),
+	// 			Content::IPFS(ipfs_cid) => {
+	// 				let len = ipfs_cid.len();
+	// 				// IPFS CID v0 is 46 bytes.
+	// 				// IPFS CID v1 is 59 bytes.df-integration-tests/src/lib.rs:272:5
+	// 				ensure!(len == 46 || len == 59, Error::<T>::InvalidIpfsCid);
+	// 				Ok(())
+	// 			},
+	// 			Content::Hyper(_) => Err(Error::<T>::HypercoreContentTypeNotSupported.into())
+	// 		}
+    // 	}
 
-		pub fn ensure_metadata_is_valid(metadata: String) -> DispatchResult {
-			let parsed: Value = serde_json::from_str(metadata)?;
-			Ok(())
-    	}
+	// 	pub fn ensure_metadata_is_valid(metadata: String) -> DispatchResult {
+	// 		let parsed: Value = serde_json::from_str(metadata)?;
+	// 		Ok(())
+    // 	}
 
-	}
+	// }
 }
