@@ -28,6 +28,7 @@ pub mod pallet {
 		org_date: Option<UnixEpoch>,
 		exp_date: Option<UnixEpoch>,
 		certificate_id: Option<TypeID>,
+		score: u32,
 		metadata: String,
 	}
 
@@ -54,14 +55,14 @@ pub mod pallet {
 			}
 		}
 
-		pub fn ensure_owner(&self, account: &T::AccountId) -> DispatchResult {
-			ensure!(self.is_owner(account), Error::<T>::NotOwner);
-			Ok(())
-		}
+		// pub fn ensure_owner(&self, account: &T::AccountId) -> DispatchResult {
+		// 	ensure!(self.is_owner(account), Error::<T>::NotAPostOwner);
+		// 	Ok(())
+		// }
 
-		pub fn is_owner(&self, account: &T::AccountId) -> bool {
-			self.user_id == *account
-		}
+		// pub fn is_owner(&self, account: &T::AccountId) -> bool {
+		// 	self.owner == *account
+		// }
 	}
 
 	#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
@@ -125,8 +126,6 @@ pub mod pallet {
 		ItemNotFound,
 		/// Errors should have helpful documentation associated with them.
 		StorageOverflow,
-		/// Error Account doesn't own this cv item.
-		NotOwner,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -161,7 +160,7 @@ pub mod pallet {
 				_metadata,
 			);
 			<ItemById<T>>::insert(item_id, new_item);
-			<ItemsByAccountId<T>>::mutate(_account_id, |x| x.push(item_id));
+			<ItemsByAccountId<T>>::mutate(who, |x| x.push(item_id));
 			<ItemId<T>>::mutate(|n| {
 				*n += 1;
 			});
