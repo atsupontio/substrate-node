@@ -13,15 +13,15 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use frame_support::inherent::Vec;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 	use pallet_utils::{Role, Status};
 	use scale_info::TypeInfo;
-	use frame_support::inherent::Vec;
 
-    #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+	#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
 	#[scale_info(bounds(), skip_type_params(T))]
-	pub struct Account<T:Config> {
+	pub struct Account<T: Config> {
 		id: T::AccountId,
 		role: Role,
 		status: Status,
@@ -45,7 +45,8 @@ pub mod pallet {
 	#[pallet::getter(fn account_storage)]
 	// Learn more about declaring storage items:
 	// https://docs.substrate.io/v3/runtime/storage#declaring-storage-items
-	pub type AccountStorage<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, Account<T>, OptionQuery>;
+	pub type AccountStorage<T: Config> =
+		StorageMap<_, Twox64Concat, T::AccountId, Account<T>, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn account_role)]
@@ -86,15 +87,18 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			match <AccountStorage<T>>::try_get(&who) {
 				Err(_) => {
-					<AccountStorage<T>>::insert(&who, Account {
-						id: who.clone(),
-						role: role,
-						status: Status::Active,
-						metadata: metadata,
-					});
+					<AccountStorage<T>>::insert(
+						&who,
+						Account {
+							id: who.clone(),
+							role: role.clone(),
+							status: Status::Active,
+							metadata,
+						},
+					);
 					<AccountRole<T>>::insert(who, role.clone());
 				},
-				Ok(_) => Err(Error::<T>::AlreadyRegistered)?
+				Ok(_) => Err(Error::<T>::AlreadyRegistered)?,
 			}
 			// Return a successful DispatchResultWithPostInfo
 			Self::deposit_event(Event::AccountRegisted);
@@ -109,15 +113,12 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			match <AccountStorage<T>>::try_get(&who) {
 				Ok(_) => {
-
 					Self::deposit_event(Event::AccountUpdated(who));
 					// Return a successful DispatchResultWithPostInfo
 					Ok(())
 				},
-				Err(_) => Err(Error::<T>::AccountNotRegistered)?
+				Err(_) => Err(Error::<T>::AccountNotRegistered)?,
 			}
-
 		}
-
 	}
 }
