@@ -18,6 +18,11 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use pallet_utils::{Role, Status};
 	use scale_info::TypeInfo;
+	use aes::Aes128;
+	use aes::cipher::{
+		BlockCipher, BlockEncrypt, BlockDecrypt, KeyInit,
+		generic_array::GenericArray,
+	};
 
 	#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
 	#[scale_info(bounds(), skip_type_params(T))]
@@ -25,6 +30,7 @@ pub mod pallet {
 		id: T::AccountId,
 		role: Role,
 		status: Status,
+		enkey: Option<String>,
 		metadata: Vec<u8>,
 	}
 
@@ -85,6 +91,9 @@ pub mod pallet {
 			// This function will return an error if the extrinsic is not signed.
 			// https://docs.substrate.io/v3/runtime/origins
 			let who = ensure_signed(origin)?;
+			let key = GenericArray::from([0u8; 16]);
+			// Initialize cipher
+			let cipher = Aes128::new(&key);
 			match <AccountStorage<T>>::try_get(&who) {
 				Err(_) => {
 					<AccountStorage<T>>::insert(
@@ -94,6 +103,7 @@ pub mod pallet {
 							role: role.clone(),
 							status: Status::Active,
 							metadata,
+							enkey: Some(cipher),
 						},
 					);
 					<AccountRole<T>>::insert(who, role.clone());
