@@ -1,4 +1,4 @@
-use crate as pallet_template;
+use crate as pallet_account;
 use frame_support::parameter_types;
 use frame_system as system;
 use sp_core::H256;
@@ -6,10 +6,11 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
-
+pub use pallet_utils::Role;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
+pub type AccountId = u64;
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
 	pub enum Test where
@@ -18,7 +19,7 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},
+		AccountModule: pallet_account::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -53,10 +54,15 @@ impl system::Config for Test {
 	type OnSetCode = ();
 }
 
-impl pallet_template::Config for Test {
+impl pallet_account::Config for Test {
 	type Event = Event;
 }
 
+pub fn str2vec(s: &str) -> Vec<u8> {
+	s.as_bytes().to_vec()
+}
+
+pub const ALICE : AccountId= 1;
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
