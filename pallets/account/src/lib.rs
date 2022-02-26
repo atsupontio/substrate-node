@@ -15,24 +15,17 @@ use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
 use pallet_utils::{Role, Status};
 use scale_info::TypeInfo;
-use generic_array::GenericArray;
-use typenum::U12;
-use aes_gcm::{AesGcm, Key, Nonce}; // Or `Aes128Gcm`
-use aes_gcm::{NewAead};
-use generic_array::ArrayLength;
 //use aes::Aes256;
 
 //#[cfg(feature = "aes")]
-use aes_gcm::Aes256Gcm;
-use aead::Buffer;
+use aes_gcm::aead::{Aead, NewAead};
+use aes_gcm::{Aes256Gcm, Key, Nonce};
 use sp_std::vec::Vec;
-use aes_gcm::AeadInPlace;
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
 	//use frame_support::inherent::Vec;
-
 
 	//pub type Key256<U12> = GenericArray<u8, U12>;
 	//pub type Aes256Gcm = AesGcm<Aes256, U12>;
@@ -104,19 +97,16 @@ pub mod pallet {
 			// This function will return an error if the extrinsic is not signed.
 			// https://docs.substrate.io/v3/runtime/origins
 			let who = ensure_signed(origin)?;
-			//let key = GenericArray::from([0u8; 16]);
-			//let key = Key::from_slice(b"ok");
 			// Initialize cipher
 			let key = Key::from_slice(b"an example very very secret key.");
 			let cipher = Aes256Gcm::new(key);
-			
-			let nonce = Nonce::from_slice(b"unique nonce");  // 96-bits; unique per message
 
-			let mut buffer: Vec<u8> = Vec::new();
-			buffer.extend_from_slice(b"plaintext message");
-			let cipher_text = cipher.encrypt_in_place_detached(nonce, b"", &mut buffer).expect("encryption failure!");
+			let nonce = Nonce::from_slice(b"unique nonce"); // 96-bits; unique per message
 
-			let cipher_text_convert = AsRef::<[u8;16]>::as_ref(&cipher_text).to_vec();
+			let plain_text = b"plaintext message".as_ref();
+			let cipher_text = cipher.encrypt(nonce, plain_text).expect("encryption failure!");
+
+			// let cipher_text_convert = AsRef::<[u8; 16]>::as_ref(&cipher_text).to_vec();
 			match <AccountStorage<T>>::try_get(&who) {
 				Err(_) => {
 					<AccountStorage<T>>::insert(
@@ -126,7 +116,7 @@ pub mod pallet {
 							role: role.clone(),
 							status: Status::Active,
 							metadata,
-							enkey: Some(cipher_text_convert),
+							enkey: Some(cipher_text),
 						},
 					);
 					<AccountRole<T>>::insert(who, role.clone());

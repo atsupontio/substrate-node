@@ -25,6 +25,7 @@ generic-array = { default-features = false, version = "0.14.5"}
 typenum = { default-features = false, version = "1.12.0"}
 aead = { default-features = false, version = "0.4.2"}
 
+log = {version = "0.4.0"}
 sp-core = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", tag = "devhub/latest" }
 sp-io = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", tag = "devhub/latest" }
 sp-runtime = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", tag = "devhub/latest" }
