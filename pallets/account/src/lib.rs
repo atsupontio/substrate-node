@@ -10,6 +10,7 @@ mod mock;
 
 #[cfg(test)]
 mod tests;
+mod impls;
 
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
@@ -18,7 +19,8 @@ use scale_info::TypeInfo;
 //use aes::Aes256;
 
 //#[cfg(feature = "aes")]
-use aes_gcm::aead::{Aead, NewAead};
+use aes_gcm::{NewAead, AeadInPlace};
+use aead::Aead;
 use aes_gcm::{Aes256Gcm, Key, Nonce};
 use sp_std::vec::Vec;
 
