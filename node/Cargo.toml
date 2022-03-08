@@ -18,7 +18,7 @@ name = "scv-chain"
 
 [dependencies]
 structopt = "0.3.25"
-
+hex-literal = "0.3.4"
 sc-cli = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate.git", tag = "monthly-2021-12" }
 sp-core = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", tag = "monthly-2021-12" }
 sc-executor = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate.git", tag = "monthly-2021-12" }
@@ -54,6 +54,7 @@ frame-benchmarking-cli = { version = "4.0.0-dev", git = "https://github.com/pari
 
 # SCV Dependencies
 scv-node = { version = "4.0.0-dev", path = "../runtime" }
+scv-primitives = {version = "1.0.0", path = "../primitives" }
 
 pallet-utils = { version = "0.0.1", path = "../pallets/utils"}
 

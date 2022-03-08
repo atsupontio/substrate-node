@@ -1,6 +1,7 @@
 use pallet_sys_man::SysManAccount;
 use pallet_utils::{Role, Status};
 use sc_service::ChainType;
+use scv_primitives::Balance;
 use scv_node::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
 	SysManConfig, SystemConfig, WASM_BINARY,
@@ -9,13 +10,15 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
+use sc_service::Properties;
 
+use crate::testnet_fixtures;
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
-
+const DEFAULT_PROTOCOL_ID: &str = "scv";
 /// Generate a crypto pair from seed.
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
 	TPublic::Pair::from_string(&format!("//{}", seed), None)
@@ -193,4 +196,93 @@ fn testnet_genesis(
 		},
 		transaction_payment: Default::default(),
 	}
+}
+
+
+/// Configure initial storage state for FRAME modules.
+fn cv_testnet_genesis(
+	wasm_binary: &[u8],
+	initial_authorities: Vec<(AuraId, GrandpaId)>,
+	root_key: AccountId,
+	endowed_accounts: Vec<(AccountId, Balance)>,
+	sys_man: Vec<(AccountId, SysManAccount<scv_node::Runtime>)>,
+	_enable_println: bool,
+) -> GenesisConfig {
+
+	
+
+	let allocation_account :Vec<(AccountId, Balance)> = endowed_accounts.iter().map(|x| (x.0.clone(), x.1.clone())).collect();
+	GenesisConfig {
+		system: SystemConfig {
+			// Add Wasm runtime to storage.
+			code: wasm_binary.to_vec(),
+		},
+		balances: BalancesConfig {
+			// Configure endowed accounts with initial balance of 1 << 60.
+			balances: allocation_account,
+		},
+		sys_man: SysManConfig {
+			sys_man: sys_man.iter().map(|x| (x.0.clone(), x.1.clone())).collect(),
+		},
+		aura: AuraConfig {
+			authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
+		},
+		grandpa: GrandpaConfig {
+			authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect(),
+		},
+		sudo: SudoConfig {
+			// Assign network admin rights.
+			key: root_key,
+		},
+		transaction_payment: Default::default(),
+	}
+}
+
+
+pub fn cv_testnet_config() -> Result<ChainSpec, String> {
+    let wasm_binary = WASM_BINARY.ok_or("Staging wasm binary not available".to_string())?;
+
+	let root_authority = SysManAccount {
+		role: Role::SysMan,
+		status: Status::Active,
+		level: Some(0),
+		children: Some(vec![]),
+		parent: None,
+		metadata: r#"
+		{
+			"description": "root authority"
+		}"#
+		.as_bytes()
+		.to_vec(),
+	};
+    Ok(ChainSpec::from_genesis(
+        "SCV Testnet",
+        "SCV_testnet",
+        ChainType::Live,
+        move || cv_testnet_genesis(
+            wasm_binary,
+			testnet_fixtures::get_cv_initial_authorities(),
+            /* Sudo Account */
+            testnet_fixtures::get_testnet_root_key(),
+            testnet_fixtures::get_endownment_account(),
+			vec![(testnet_fixtures::get_testnet_root_key(),root_authority.clone())],
+            true,
+        ),
+        vec![],
+		None,
+        Some(DEFAULT_PROTOCOL_ID),
+        Some(cv_properties()),
+        None,
+    ))
+}
+
+
+pub fn cv_properties() -> Properties {
+	let mut properties = Properties::new();
+
+	properties.insert("ss58Format".into(), 28.into());
+	properties.insert("tokenDecimals".into(), 12.into());
+	properties.insert("tokenSymbol".into(), "SCV".into());
+
+	properties
 }

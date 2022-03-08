@@ -45,6 +45,9 @@ frame-benchmarking = { version = "4.0.0-dev", default-features = false, git = "h
 frame-system-benchmarking = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", tag = "monthly-2021-12", optional = true }
 hex-literal = { version = "0.3.4", optional = true }
 
+
+primitives = { package = "scv-primitives", path = "../primitives", default-features = false }
+
 # SVC-chain Dependencies
 pallet-utils = { version = "0.0.1", default-features = false, path = "../pallets/utils" }
 pallet-account = { version = "1.0.0", default-features = false, path = "../pallets/account" }
@@ -88,6 +91,7 @@ std = [
 	"sp-std/std",
 	"sp-transaction-pool/std",
 	"sp-version/std",
+	"primitives/std",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",

@@ -31,6 +31,7 @@ sp-io = { default-features = false, version = "4.0.0-dev", git = "https://github
 sp-runtime = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", tag = "monthly-2021-12" }
 pallet-utils = { version = "0.0.1", default-features = false, path = "../utils" }
 sp-std = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", tag = "monthly-2021-12" }
+
 [features]
 default = ["std"]
 std = [
